@@ -1,3 +1,5 @@
+#pragma once
+
 #include <cstdint> // uint8_t
 #include <cstring> // memcpy
 

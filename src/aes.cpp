@@ -241,7 +241,7 @@ namespace {
         }
     }
 
-    static void invShiftRows(state_t * state) {
+    void invShiftRows(state_t * state) {
         uint8_t temp;
 
         // Rotate first row 1 columns to right  
@@ -271,13 +271,13 @@ namespace {
     void xorWithIv(uint8_t * buffer, uint8_t * iv) {
         uint8_t i;
         // The block in AES is always 128bit no matter the key size
-        for (i = 0; i < BlockLength; ++i) {
+        for (i = 0; i < aes::BlockLength; ++i) {
             buffer[i] ^= iv[i];
         }
     }
 
     // `cipher()` is the main function that encrypts the PlainText.
-    static void cipher(state_t * state, uint8_t * roundKey) {
+    void cipher(state_t * state, uint8_t * roundKey) {
         uint8_t round = 0;
 
         // Add the First round key to the state before starting the rounds.
@@ -300,7 +300,7 @@ namespace {
         addRoundKey(Nr, state, roundKey);
     }
 
-    static void invCipher(state_t * state, uint8_t * roundKey) {
+    void invCipher(state_t * state, uint8_t * roundKey) {
         uint8_t round = 0;
 
         // Add the First round key to the state before starting the rounds.
