@@ -282,7 +282,7 @@ namespace {
 
         // Add the First round key to the state before starting the rounds.
         addRoundKey(0, state, roundKey); 
-        
+
         // There will be Nr rounds.
         // The first Nr-1 rounds are identical.
         // These Nr-1 rounds are executed in the loop below.
@@ -292,7 +292,7 @@ namespace {
             mixColumns(state);
             addRoundKey(round, state, roundKey);
         }
-        
+
         // The last round is given below.
         // The `mixColumns()` function is not here in the last round.
         subBytes(state);
@@ -315,7 +315,7 @@ namespace {
             addRoundKey(round, state, roundKey);
             invMixColumns(state);
         }
-        
+
         // The last round is given below.
         // The `mixColumns()` function is not here in the last round.
         invShiftRows(state);
