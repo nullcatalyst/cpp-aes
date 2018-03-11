@@ -7,31 +7,34 @@ namespace aes {
     constexpr int BlockLength = 16;
     constexpr int KeyLength = 32;
 
+    using Key = uint8_t[KeyLength];
+    using IV = uint8_t[BlockLength];
+
     class Context {
         static constexpr int KeyExpSize = 240;
 
         uint8_t roundKey[KeyExpSize];
-        uint8_t iv[BlockLength];
+        IV iv;
 
     public:
         Context();
-        Context(uint8_t * key, uint8_t * iv);
+        Context(const Key key, const IV iv);
 
         /**
          * Set the key.
          * @param key The key.
          */
-        void setKey(uint8_t * key);
+        void setKey(const Key key);
 
         /**
          * Set the initialization vector.
          * @param iv The initialize vector.
          */
-        void setIV(uint8_t * iv) {
+        void setIV(const IV iv) {
             memcpy(this->iv, iv, sizeof(this->iv));
         }
 
-        void encrypt(uint8_t * buffer, uint32_t length);
-        void decrypt(uint8_t * buffer, uint32_t length);
+        void encrypt(void * buffer, uint32_t length);
+        void decrypt(void * buffer, uint32_t length);
     };
 }

@@ -6,7 +6,7 @@ namespace {
     constexpr int Nr = 14;
 
     /** State: array holding the intermediate results during decryption. */
-    typedef uint8_t state_t[4][4];
+    using State = uint8_t[4][4];
 
     // The lookup-tables are marked const so they can be placed in read-only storage instead of RAM
     // The numbers below can be computed dynamically trading ROM for RAM -
@@ -132,7 +132,7 @@ namespace {
 
     // This function adds the round key to state.
     // The round key is added to the state by an XOR function.
-    void addRoundKey(uint8_t round, state_t * state, uint8_t * roundKey) {
+    void addRoundKey(uint8_t round, State * state, uint8_t * roundKey) {
         uint8_t i, j;
 
         for (i = 0; i < 4; ++i) {
@@ -144,7 +144,7 @@ namespace {
 
     // The `subBytes()` function substitutes the values in the
     // state matrix with values in an S-box.
-    void subBytes(state_t * state) {
+    void subBytes(State * state) {
         uint8_t i, j;
         for (i = 0; i < 4; ++i) {
             for (j = 0; j < 4; ++j) {
@@ -156,7 +156,7 @@ namespace {
     // The `shiftRows()` function shifts the rows in the state to the left.
     // Each row is shifted with different offset.
     // Offset = Row number. So the first row is not shifted.
-    void shiftRows(state_t * state) {
+    void shiftRows(State * state) {
         uint8_t temp;
 
         // Rotate first row 1 columns to left  
@@ -188,7 +188,7 @@ namespace {
     }
 
     // `mixColumns()` function mixes the columns of the state matrix
-    void mixColumns(state_t * state) {
+    void mixColumns(State * state) {
         uint8_t i;
         uint8_t tmp, tm, t;
         for (i = 0; i < 4; ++i) {
@@ -214,7 +214,7 @@ namespace {
     // `invMixColumns()` function mixes the columns of the state matrix.
     // The method used to multiply may be difficult to understand for the inexperienced.
     // Please use the references to gain more information.
-    void invMixColumns(state_t * state) {
+    void invMixColumns(State * state) {
         int i;
         uint8_t a, b, c, d;
         for (i = 0; i < 4; ++i) {
@@ -232,7 +232,7 @@ namespace {
 
     // The `invSubBytes()` Function Substitutes the values in the
     // state matrix with values in an S-box.
-    void invSubBytes(state_t * state) {
+    void invSubBytes(State * state) {
         uint8_t i, j;
         for (i = 0; i < 4; ++i) {
             for (j = 0; j < 4; ++j) {
@@ -241,7 +241,7 @@ namespace {
         }
     }
 
-    void invShiftRows(state_t * state) {
+    void invShiftRows(State * state) {
         uint8_t temp;
 
         // Rotate first row 1 columns to right  
@@ -277,7 +277,7 @@ namespace {
     }
 
     // `cipher()` is the main function that encrypts the PlainText.
-    void cipher(state_t * state, uint8_t * roundKey) {
+    void cipher(State * state, uint8_t * roundKey) {
         uint8_t round = 0;
 
         // Add the First round key to the state before starting the rounds.
@@ -300,7 +300,7 @@ namespace {
         addRoundKey(Nr, state, roundKey);
     }
 
-    void invCipher(state_t * state, uint8_t * roundKey) {
+    void invCipher(State * state, uint8_t * roundKey) {
         uint8_t round = 0;
 
         // Add the First round key to the state before starting the rounds.
@@ -327,7 +327,7 @@ namespace {
 namespace aes {
     Context::Context() : roundKey{0}, iv{0} {}
 
-    Context::Context(uint8_t * key, uint8_t * iv) {
+    Context::Context(const Key key, const IV iv) {
         keyExpansion(roundKey, key);
         memcpy(this->iv, iv, sizeof(this->iv));
     }
@@ -336,35 +336,37 @@ namespace aes {
      * Set the key.
      * @param key The key.
      */
-    void Context::setKey(uint8_t * key) {
+    void Context::setKey(const Key key) {
         keyExpansion(roundKey, key);
     }
 
-    void Context::encrypt(uint8_t * buffer, uint32_t length) {
+    void Context::encrypt(void * buffer, uint32_t length) {
         uintptr_t i;
+        uint8_t * ptr = (uint8_t *) buffer;
         uint8_t * iv = this->iv;
 
         for (i = 0; i < length; i += BlockLength) {
-            xorWithIv(buffer, iv);
-            cipher((state_t *) buffer, roundKey);
-            iv = buffer;
-            buffer += BlockLength;
+            xorWithIv(ptr, iv);
+            cipher((State *) ptr, roundKey);
+            iv = ptr;
+            ptr += BlockLength;
         }
 
         // Update the `iv` in this `Context` for the next call
         memcpy(this->iv, iv, sizeof(this->iv));
     }
 
-    void Context::decrypt(uint8_t * buffer, uint32_t length) {
+    void Context::decrypt(void * buffer, uint32_t length) {
         uintptr_t i;
+        uint8_t * ptr = (uint8_t *) buffer;
         uint8_t storeNextIv[BlockLength];
 
         for (i = 0; i < length; i += BlockLength) {
-            memcpy(storeNextIv, buffer, BlockLength);
-            invCipher((state_t *) buffer, roundKey);
-            xorWithIv(buffer, iv);
+            memcpy(storeNextIv, ptr, BlockLength);
+            invCipher((State *) ptr, roundKey);
+            xorWithIv(ptr, iv);
             memcpy(iv, storeNextIv, BlockLength);
-            buffer += BlockLength;
+            ptr += BlockLength;
         }
     }
 }
